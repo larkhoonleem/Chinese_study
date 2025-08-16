@@ -10,79 +10,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# Custom CSS for button styling and content boxes
-st.markdown("""
-    <style>
-    /* Make the button bigger with larger font */
-    .stButton > button {
-        height: 80px !important;
-        font-size: 24px !important;
-        font-weight: bold !important;
-        background-color: #FF4B4B !important;
-        color: white !important;
-        border-radius: 10px !important;
-        border: none !important;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-        transition: all 0.3s !important;
-    }
-    
-    .stButton > button:hover {
-        background-color: #FF6B6B !important;
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15) !important;
-        transform: translateY(-2px) !important;
-    }
-    
-    /* Style for content boxes */
-    .content-box {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-        border-radius: 15px;
-        margin: 10px 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        color: white;
-    }
-    
-    .content-box-chinese {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        padding: 20px;
-        border-radius: 15px;
-        margin: 10px 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        color: white;
-    }
-    
-    .content-box-english {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        padding: 20px;
-        border-radius: 15px;
-        margin: 10px 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        color: white;
-    }
-    
-    .column-label {
-        font-size: 14px;
-        font-weight: 600;
-        opacity: 0.9;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .column-value {
-        font-size: 28px;
-        font-weight: bold;
-        line-height: 1.4;
-    }
-    
-    .column-value-small {
-        font-size: 20px;
-        font-weight: 500;
-        line-height: 1.4;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
 # Title and description
 st.title("My Chinese Practice")
 st.markdown("Click the button below to get a random sentence from your practice file!")
@@ -136,8 +63,8 @@ if df is not None:
         st.write(f"Total rows: {len(df)}")
         st.write(f"Columns: {', '.join(df.columns.tolist())}")
     
-    # Button to get random sentence with custom styling
-    col1, col2, col3 = st.columns([1, 3, 1])
+    # Button to get random sentence
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🎲 Get Random Sentence", type="primary", use_container_width=True):
             # Select random row
@@ -145,16 +72,13 @@ if df is not None:
             st.session_state.current_sentence = df.iloc[random_index]
             st.session_state.show_sentence = True
     
-    # Add some spacing after button
-    st.markdown("<br>", unsafe_allow_html=True)
-    
     # Display the random sentence
     if st.session_state.show_sentence and st.session_state.current_sentence is not None:
 
         # Create cards for each column value
         sentence_data = st.session_state.current_sentence
         
-        # Display each column in a nice format with colored boxes
+        # Display each column in a nice format
         for column_name in df.columns:
             value = sentence_data[column_name]
             
@@ -162,41 +86,22 @@ if df is not None:
             if pd.isna(value) or (isinstance(value, str) and value.strip() == ''):
                 continue
             
-            # Determine box style based on content
-            has_chinese = isinstance(value, str) and any('\u4e00' <= char <= '\u9fff' for char in str(value))
-            
-            # Check if column name suggests it's Chinese content
-            is_chinese_column = any(keyword in column_name.lower() for keyword in ['chinese', '中文', 'hanzi', 'pinyin'])
-            is_english_column = any(keyword in column_name.lower() for keyword in ['english', 'translation', '英文'])
-            
-            # Choose appropriate style
-            if has_chinese or is_chinese_column:
-                box_class = "content-box-chinese"
-                value_class = "column-value"
-            elif is_english_column:
-                box_class = "content-box-english"
-                value_class = "column-value-small"
-            else:
-                box_class = "content-box"
-                value_class = "column-value-small"
-            
-            # Create the styled box with both label and value
-            st.markdown(f"""
-                <div class="{box_class}">
-                    <div class="column-label">{column_name}</div>
-                    <div class="{value_class}">{value}</div>
-                </div>
-            """, unsafe_allow_html=True)
+            # Create a nice display for each field
+            with st.container():
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.markdown(f"**{column_name}:**")
+                with col2:
+                    # Display value with larger font if it contains Chinese characters
+                    if isinstance(value, str) and any('\u4e00' <= char <= '\u9fff' for char in str(value)):
+                        st.markdown(f"<p style='font-size: 24px; margin: 0;'>{value}</p>", 
+                                  unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<p style='font-size: 18px; margin: 0;'>{value}</p>", 
+                                  unsafe_allow_html=True)
         
-        # Add row number info with better styling
-        st.markdown(f"""
-            <div style="text-align: center; margin-top: 20px; padding: 10px; 
-                        background-color: #f0f2f6; border-radius: 10px;">
-                <span style="color: #666; font-size: 14px;">
-                    Row #{df.index.get_loc(st.session_state.current_sentence.name) + 1} of {len(df)}
-                </span>
-            </div>
-        """, unsafe_allow_html=True)
+        # Add row number info
+        st.caption(f"Row #{df.index.get_loc(st.session_state.current_sentence.name) + 1} of {len(df)}")
         
         # Option to show/hide full row data
         with st.expander("🔍 View Raw Data"):
